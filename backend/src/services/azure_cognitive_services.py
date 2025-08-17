@@ -1,37 +1,52 @@
 import os
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
-from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
-from msrest.authentication import CognitiveServicesCredentials
-
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.textanalytics import TextAnalyticsClient
-
 import time
 
 # Get environment variables
 COG_SERV_KEY = os.getenv("AZURE_COGNITIVE_SERVICES_KEY")
 COG_SERV_ENDPOINT = os.getenv("AZURE_COGNITIVE_SERVICES_ENDPOINT")
 
-# Initialize Computer Vision client
-computervision_client = ComputerVisionClient(
-    COG_SERV_ENDPOINT,
-    CognitiveServicesCredentials(COG_SERV_KEY)
-)
+# Initialize clients only if credentials are available
+computervision_client = None
+text_analytics_client = None
 
-# Initialize Text Analytics client
-text_analytics_client = TextAnalyticsClient(
-    endpoint=COG_SERV_ENDPOINT,
-    credential=AzureKeyCredential(COG_SERV_KEY)
-)
+if COG_SERV_KEY and COG_SERV_ENDPOINT:
+    try:
+        from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+        from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
+        from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
+        from msrest.authentication import CognitiveServicesCredentials
+        
+        from azure.core.credentials import AzureKeyCredential
+        from azure.ai.textanalytics import TextAnalyticsClient
+        
+        # Initialize Computer Vision client
+        computervision_client = ComputerVisionClient(
+            COG_SERV_ENDPOINT,
+            CognitiveServicesCredentials(COG_SERV_KEY)
+        )
+        
+        # Initialize Text Analytics client
+        text_analytics_client = TextAnalyticsClient(
+            endpoint=COG_SERV_ENDPOINT,
+            credential=AzureKeyCredential(COG_SERV_KEY)
+        )
+        print("Azure Cognitive Services initialized successfully")
+    except Exception as e:
+        print(f"Failed to initialize Azure Cognitive Services: {e}")
+        computervision_client = None
+        text_analytics_client = None
+else:
+    print("Azure Cognitive Services credentials not found. Running in mock mode.")
 
 def analyze_image_from_url(image_url):
     """Analyzes an image from a URL using Computer Vision."""
-    if not COG_SERV_KEY or not COG_SERV_ENDPOINT:
-        print("Azure Cognitive Services credentials not set. Skipping image analysis.")
-        return {"error": "Cognitive Services credentials not configured"}
+    if not computervision_client:
+        print("Azure Cognitive Services not initialized. Using AI simulator.")
+        from .azure_ai_simulator import azure_simulator
+        return azure_simulator.analyze_image_from_url(image_url)
 
     try:
+        from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
         # Select the visual feature(s) you want to analyze
         features = [VisualFeatureTypes.tags, VisualFeatureTypes.description, VisualFeatureTypes.categories]
         
@@ -48,9 +63,20 @@ def analyze_image_from_url(image_url):
 
 def analyze_sentiment(text):
     """Analyzes the sentiment of a given text using Language Service."""
-    if not COG_SERV_KEY or not COG_SERV_ENDPOINT:
-        print("Azure Cognitive Services credentials not set. Skipping sentiment analysis.")
-        return {"error": "Cognitive Services credentials not configured"}
+    if not text_analytics_client:
+        print("Azure Text Analytics not initialized. Using AI simulator.")
+        from .azure_ai_simulator import azure_simulator
+        result = azure_simulator.analyze_sentiment(text)
+        
+        # Convert to expected format for backward compatibility
+        return {
+            "sentiment": result["sentiment"],
+            "positive_score": result["confidence_scores"]["positive"],
+            "neutral_score": result["confidence_scores"]["neutral"],
+            "negative_score": result["confidence_scores"]["negative"],
+            "key_phrases": result.get("key_phrases", []),
+            "metadata": result.get("metadata", {})
+        }
 
     try:
         documents = [text]

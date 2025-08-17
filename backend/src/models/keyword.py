@@ -22,6 +22,13 @@ class Keyword:
     
     def to_dict(self):
         """Convert to dictionary for JSON serialization"""
+        def format_datetime(dt):
+            if dt is None:
+                return None
+            if isinstance(dt, str):
+                return dt
+            return dt.isoformat() if hasattr(dt, 'isoformat') else str(dt)
+        
         return {
             '_id': str(self._id),
             'keyword': self.keyword,
@@ -32,8 +39,8 @@ class Keyword:
             'niche': self.niche,
             'price_range': self.price_range,
             'seasonal_data': self.seasonal_data,
-            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'last_updated': format_datetime(self.last_updated),
+            'created_at': format_datetime(self.created_at)
         }
     
     @classmethod
@@ -88,11 +95,19 @@ class Keyword:
         collection = get_collection(Config.COLLECTION_KEYWORDS)
         if collection is None:
             return []
-            
-        cursor = collection.find({
-            'keyword': {'$regex': query.lower(), '$options': 'i'}
-        }).limit(limit).sort('search_volume', -1)
-        return [cls.from_dict(data) for data in cursor]
+        
+        # Get all keywords and filter in Python (compatible with both MongoDB and TinyDB)
+        all_keywords = collection.find({})
+        filtered_keywords = []
+        
+        query_lower = query.lower()
+        for data in all_keywords:
+            if query_lower in data.get('keyword', '').lower():
+                filtered_keywords.append(cls.from_dict(data))
+        
+        # Sort by search volume (descending) and apply limit
+        filtered_keywords.sort(key=lambda k: k.search_volume or 0, reverse=True)
+        return filtered_keywords[:limit]
     
     @classmethod
     def get_trending_keywords(cls, limit=50):
@@ -100,11 +115,12 @@ class Keyword:
         collection = get_collection(Config.COLLECTION_KEYWORDS)
         if collection is None:
             return []
-            
-        cursor = collection.find({
-            'trend_direction': 'rising'
-        }).limit(limit).sort('search_volume', -1)
-        return [cls.from_dict(data) for data in cursor]
+        
+        # Get trending keywords and sort by search volume
+        keywords_data = collection.find({'trend_direction': 'rising'})
+        keywords = [cls.from_dict(data) for data in keywords_data]
+        keywords.sort(key=lambda k: k.search_volume or 0, reverse=True)
+        return keywords[:limit]
     
     @classmethod
     def get_by_niche(cls, niche, limit=30):
@@ -112,9 +128,12 @@ class Keyword:
         collection = get_collection(Config.COLLECTION_KEYWORDS)
         if collection is None:
             return []
-            
-        cursor = collection.find({'niche': niche}).limit(limit).sort('search_volume', -1)
-        return [cls.from_dict(data) for data in cursor]
+        
+        # Get keywords by niche and sort by search volume
+        keywords_data = collection.find({'niche': niche})
+        keywords = [cls.from_dict(data) for data in keywords_data]
+        keywords.sort(key=lambda k: k.search_volume or 0, reverse=True)
+        return keywords[:limit]
     
     @classmethod
     def get_low_competition(cls, max_competition='medium', limit=30):
@@ -122,15 +141,21 @@ class Keyword:
         collection = get_collection(Config.COLLECTION_KEYWORDS)
         if collection is None:
             return []
-            
+        
         competition_order = ['low', 'medium', 'high']
         max_index = competition_order.index(max_competition)
         allowed_levels = competition_order[:max_index + 1]
         
-        cursor = collection.find({
-            'competition_level': {'$in': allowed_levels}
-        }).limit(limit).sort('search_volume', -1)
-        return [cls.from_dict(data) for data in cursor]
+        # Get all keywords and filter by competition level
+        all_keywords = collection.find({})
+        filtered_keywords = []
+        for data in all_keywords:
+            if data.get('competition_level') in allowed_levels:
+                filtered_keywords.append(cls.from_dict(data))
+        
+        # Sort by search volume
+        filtered_keywords.sort(key=lambda k: k.search_volume or 0, reverse=True)
+        return filtered_keywords[:limit]
     
     def add_related_keyword(self, related_keyword):
         """Add a related keyword"""

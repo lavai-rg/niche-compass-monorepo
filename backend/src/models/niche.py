@@ -2,8 +2,9 @@ from datetime import datetime
 from bson import ObjectId
 from src.database import get_collection
 from src.config import Config
+from src.models.base_model import BaseModel
 
-class Niche:
+class Niche(BaseModel):
     def __init__(self, name, category=None, description=None, trend_data=None, 
                  competition_score=None, demand_score=None, visual_analysis=None,
                  top_products=None, price_analysis=None, created_at=None, updated_at=None, _id=None):
@@ -33,8 +34,8 @@ class Niche:
             'visual_analysis': self.visual_analysis,
             'top_products': self.top_products,
             'price_analysis': self.price_analysis,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'created_at': self.format_datetime(self.created_at),
+            'updated_at': self.format_datetime(self.updated_at)
         }
     
     @classmethod
@@ -90,10 +91,17 @@ class Niche:
         collection = get_collection(Config.COLLECTION_NICHES)
         if collection is None:
             return None
-            
-        data = collection.find_one({'name': {'$regex': name, '$options': 'i'}})
+        
+        # Try exact match first
+        data = collection.find_one({'name': name})
         if data:
             return cls.from_dict(data)
+        
+        # Try partial match using search helper
+        matches = cls.search_by_text(collection, ['name'], name, limit=1)
+        if matches:
+            return cls.from_dict(matches[0])
+        
         return None
     
     @classmethod
@@ -102,9 +110,10 @@ class Niche:
         collection = get_collection(Config.COLLECTION_NICHES)
         if collection is None:
             return []
-            
-        cursor = collection.find().skip(skip).limit(limit).sort('updated_at', -1)
-        return [cls.from_dict(data) for data in cursor]
+        
+        # Use BaseModel helper for pagination and sorting
+        data_list = cls.find_all_with_pagination(collection, limit, skip, 'updated_at', True)
+        return [cls.from_dict(data) for data in data_list]
     
     @classmethod
     def search_by_category(cls, category, limit=20):
@@ -112,9 +121,10 @@ class Niche:
         collection = get_collection(Config.COLLECTION_NICHES)
         if collection is None:
             return []
-            
-        cursor = collection.find({'category': {'$regex': category, '$options': 'i'}}).limit(limit)
-        return [cls.from_dict(data) for data in cursor]
+        
+        # Use BaseModel helper for text search
+        data_list = cls.search_by_text(collection, ['category'], category, limit, 'competition_score')
+        return [cls.from_dict(data) for data in data_list]
     
     def delete(self):
         """Delete niche from database"""
