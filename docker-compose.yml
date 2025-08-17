@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      # Pastikan variabel lingkungan ini sesuai dengan .env Anda
+      # Anda bisa menggunakan file .env terpisah untuk Docker Compose
+      - SECRET_KEY=your_super_secret_key_here
+      - MONGODB_CONNECTION_STRING=
+      - AZURE_COGNITIVE_SERVICES_KEY=
+      - AZURE_COGNITIVE_SERVICES_ENDPOINT=
+    volumes:
+      - ./backend:/app # Untuk development, agar perubahan kode langsung terlihat
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend # Frontend bergantung pada backend
+    environment:
+      # Sesuaikan dengan URL backend Anda di dalam Docker network
+      - VITE_API_BASE_URL=http://backend:5000
+
+# Anda bisa menambahkan layanan database di sini jika tidak menggunakan Cosmos DB eksternal
+# db:
+#   image: mongo:latest
+#   ports:
+#     - "27017:27017"
+#   volumes:
+#     - mongo_data:/data/db
+
+# volumes:
+#   mongo_data:
+
+
