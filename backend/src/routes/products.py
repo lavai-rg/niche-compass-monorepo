@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from src.models.product import Product
 from src.services.azure_cognitive_services import analyze_image_from_url, analyze_sentiment
+from src.services.visual_intelligence import VisualIntelligenceEngine
 import re
 import logging
 
@@ -54,14 +55,27 @@ def analyze_product():
         ]
     }
 
-    # --- Azure Cognitive Services Integration ---
-    # Image Analysis
+    # --- Azure Cognitive Services + Visual Intelligence Integration ---
+    # Initialize Visual Intelligence Engine
+    vi_engine = VisualIntelligenceEngine()
+    
+    # Image Analysis with Visual Intelligence
     if mock_product_data.get("images"):
         image_analysis_results = []
+        visual_intelligence_results = []
+        
         for img_url in mock_product_data["images"]:
+            # Basic Azure analysis
             analysis = analyze_image_from_url(img_url)
             image_analysis_results.append(analysis)
+            
+            # Advanced Visual Intelligence analysis
+            if not analysis.get("error"):
+                vi_analysis = vi_engine.analyze_visual_intelligence(analysis)
+                visual_intelligence_results.append(vi_analysis)
+        
         mock_product_data["image_analysis"] = image_analysis_results
+        mock_product_data["visual_intelligence"] = visual_intelligence_results
 
     # Sentiment Analysis for Reviews
     if mock_product_data.get("reviews"):

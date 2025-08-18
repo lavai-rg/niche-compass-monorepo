@@ -16,6 +16,7 @@ from src.routes.user import user_bp
 from src.routes.keywords import keywords_bp
 from src.routes.niches import niches_bp
 from src.routes.products import products_bp
+from src.routes.market_pulse import market_pulse_bp
 
 # Configure logging
 logging.basicConfig(
@@ -43,6 +44,8 @@ def create_app():
     app.register_blueprint(niches_bp, url_prefix='/api')
     logger.info("Registering products_bp blueprint")
     app.register_blueprint(products_bp, url_prefix='/api')
+    logger.info("Registering market_pulse_bp blueprint")
+    app.register_blueprint(market_pulse_bp, url_prefix='/api/market')
     logger.info("All blueprints registered successfully")
     
     # Health check endpoint
@@ -78,6 +81,7 @@ def create_app():
                 'niches': '/api/niches/*',
                 'products': '/api/products/*',
                 'users': '/api/users/*',
+                'market_pulse': '/api/market/*',
                 'health': '/api/health'
             }
         }
