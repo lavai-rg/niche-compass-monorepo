@@ -92,6 +92,9 @@ def analyze_sentiment(text):
         print(f"Error analyzing sentiment: {e}")
         return {"error": str(e)}
 
+# Export main functions for backend integration
+analyze_image = analyze_image_from_url  # Alias for backward compatibility
+
 # Example Usage (for testing purposes)
 if __name__ == "__main__":
     # Make sure to set AZURE_COGNITIVE_SERVICES_KEY and AZURE_COGNITIVE_SERVICES_ENDPOINT
