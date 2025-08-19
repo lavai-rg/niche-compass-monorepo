@@ -17,6 +17,10 @@ from src.routes.keywords import keywords_bp
 from src.routes.niches import niches_bp
 from src.routes.products import products_bp
 from src.routes.market_pulse import market_pulse_bp
+from src.routes.auth_routes import auth_bp
+
+# Import Auth0 validator
+from src.auth import init_auth0_validator
 
 # Configure logging
 logging.basicConfig(
@@ -31,9 +35,18 @@ def create_app():
     
     # Load configuration
     app.config['SECRET_KEY'] = Config.SECRET_KEY
+    app.config['AUTH0_DOMAIN'] = Config.AUTH0_DOMAIN
+    app.config['AUTH0_AUDIENCE'] = Config.AUTH0_AUDIENCE
+    app.config['AUTH0_CLIENT_ID'] = Config.AUTH0_CLIENT_ID
+    app.config['AUTH0_CLIENT_SECRET'] = Config.AUTH0_CLIENT_SECRET
+    
+    # Initialize Auth0 validator
+    init_auth0_validator(app)
     
     # Enable CORS for all routes
-    CORS(app, origins="*")
+    CORS(app, origins="*", 
+         allow_headers=['Content-Type', 'Authorization'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
     # Register blueprints
     logger.info("Registering user_bp blueprint")
@@ -46,6 +59,8 @@ def create_app():
     app.register_blueprint(products_bp, url_prefix='/api')
     logger.info("Registering market_pulse_bp blueprint")
     app.register_blueprint(market_pulse_bp, url_prefix='/api/market')
+    logger.info("Registering auth_bp blueprint")
+    app.register_blueprint(auth_bp)
     logger.info("All blueprints registered successfully")
     
     # Health check endpoint
@@ -82,7 +97,13 @@ def create_app():
                 'products': '/api/products/*',
                 'users': '/api/users/*',
                 'market_pulse': '/api/market/*',
+                'auth': '/api/auth/*',
                 'health': '/api/health'
+            },
+            'auth': {
+                'domain': Config.AUTH0_DOMAIN,
+                'audience': Config.AUTH0_AUDIENCE,
+                'enabled': bool(Config.AUTH0_DOMAIN and Config.AUTH0_AUDIENCE)
             }
         }
     

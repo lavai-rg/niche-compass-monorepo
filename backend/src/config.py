@@ -31,6 +31,13 @@ class Config:
     # External APIs
     ETSY_API_KEY = os.getenv('ETSY_API_KEY')
     
+    # Auth0 Configuration
+    AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+    AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
+    AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET')
+    AUTH0_AUDIENCE = os.getenv('AUTH0_AUDIENCE')
+    AUTH0_CALLBACK_URL = os.getenv('AUTH0_CALLBACK_URL')
+    
     # Application Settings
     MAX_REQUESTS_PER_MINUTE = int(os.getenv('MAX_REQUESTS_PER_MINUTE', 100))
     CACHE_TIMEOUT_SECONDS = int(os.getenv('CACHE_TIMEOUT_SECONDS', 3600))
