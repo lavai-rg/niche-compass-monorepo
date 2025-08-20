@@ -23,6 +23,10 @@ class DatabaseAdapter:
     
     def _setup_database(self):
         """Setup database connection based on available options"""
+        # Load environment variables
+        from dotenv import load_dotenv
+        load_dotenv()
+        
         connection_string = os.getenv('COSMOS_DB_CONNECTION_STRING')
         
         # Try MongoDB first (production)
@@ -52,7 +56,7 @@ class DatabaseAdapter:
             connection_string,
             serverSelectionTimeoutMS=5000,
             ssl=True,
-            retryWrites=True
+            retryWrites=False
         )
         
         # Test connection
@@ -68,7 +72,8 @@ class DatabaseAdapter:
         """Setup TinyDB for local development"""
         from tinydb import TinyDB
         
-        db_path = '/home/user/webapp/data/niche_compass.json'
+        # Use current directory for Windows compatibility
+        db_path = os.path.join(os.getcwd(), 'data', 'niche_compass.json')
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
         
         self.db = TinyDB(db_path)
@@ -136,6 +141,14 @@ class MongoCollection:
     def delete_one(self, query: Dict) -> Dict:
         result = self.collection.delete_one(query)
         return {'deleted_count': result.deleted_count}
+    
+    def count_documents(self, query: Dict = None) -> int:
+        """Count documents matching the query"""
+        return self.collection.count_documents(query or {})
+    
+    def count(self, query: Dict = None) -> int:
+        """Count documents matching the query (alias for count_documents)"""
+        return self.count_documents(query or {})
 
 class TinyCollection:
     """TinyDB table wrapper to mimic MongoDB interface"""
@@ -290,6 +303,58 @@ class TinyCollection:
                 return {'deleted_count': len(removed)}
         
         return {'deleted_count': 0}
+        
+    def delete_many(self, query: Dict) -> Dict:
+        """Delete multiple documents matching the query"""
+        from tinydb import Query
+        q = Query()
+        
+        # Handle other queries
+        conditions = []
+        for key, value in query.items():
+            if key != '_id':
+                conditions.append(q[key] == value)
+        
+        if conditions:
+            condition = conditions[0]
+            for cond in conditions[1:]:
+                condition = condition & cond
+            
+            docs = self.table.search(condition)
+            if docs:
+                doc_ids = [doc.doc_id for doc in docs]
+                removed = self.table.remove(doc_ids=doc_ids)
+                return {'deleted_count': len(removed)}
+        
+        return {'deleted_count': 0}
+    
+    def count_documents(self, query: Dict = None) -> int:
+        """Count documents matching the query (MongoDB compatibility)"""
+        if query is None:
+            return len(self.table)
+        
+        from tinydb import Query
+        q = Query()
+        
+        # Handle query conditions
+        conditions = []
+        for key, value in query.items():
+            if key != '_id':
+                conditions.append(q[key] == value)
+        
+        if conditions:
+            condition = conditions[0]
+            for cond in conditions[1:]:
+                condition = condition & cond
+            
+            docs = self.table.search(condition)
+            return len(docs)
+        
+        return len(self.table)
+    
+    def count(self, query: Dict = None) -> int:
+        """Count documents matching the query (alias for count_documents)"""
+        return self.count_documents(query)
     
     def _convert_id(self, id_value):
         """Convert string ID to int for TinyDB"""

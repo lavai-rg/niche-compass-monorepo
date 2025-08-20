@@ -27,6 +27,11 @@ class Config:
     AZURE_TEXT_ANALYTICS_KEY = os.getenv('AZURE_TEXT_ANALYTICS_KEY')
     AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
     AZURE_OPENAI_KEY = os.getenv('AZURE_OPENAI_KEY')
+
+    # Auth0 Configuration
+    AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
+    API_AUDIENCE = os.getenv('API_AUDIENCE')
+    ALGORITHMS = ["RS256"]
     
     # External APIs
     ETSY_API_KEY = os.getenv('ETSY_API_KEY')
