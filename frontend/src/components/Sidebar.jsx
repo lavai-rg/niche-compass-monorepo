@@ -1,4 +1,4 @@
-import { Compass, Search, TrendingUp, Package, X, BarChart3, Target, Lightbulb } from 'lucide-react'
+import { Compass, Search, TrendingUp, Package, X, BarChart3, Target, Lightbulb, Eye, FileText, Activity } from 'lucide-react'
 import { Button } from '@/components/ui/button.jsx'
 
 const Sidebar = ({ isOpen, onClose, currentView, setCurrentView }) => {
@@ -7,12 +7,15 @@ const Sidebar = ({ isOpen, onClose, currentView, setCurrentView }) => {
     { id: 'keywords', label: 'Keyword Explorer', icon: Search, description: 'Research trending keywords' },
     { id: 'niches', label: 'Niche Analyzer', icon: Compass, description: 'Deep dive into niches' },
     { id: 'products', label: 'Product Analyzer', icon: Package, description: 'Analyze Etsy products' },
+    { id: 'ai-vision', label: 'AI Vision Analysis', icon: Eye, description: 'Image analysis & insights' },
+    { id: 'ai-text', label: 'AI Text Analytics', icon: FileText, description: 'Sentiment & entity analysis' },
+    { id: 'ai-monitoring', label: 'AI Monitoring', icon: Activity, description: 'Service health & metrics' },
   ]
 
   const quickActions = [
-    { id: 'trending', label: 'Trending Niches', icon: BarChart3 },
-    { id: 'opportunities', label: 'Opportunities', icon: Target },
-    { id: 'insights', label: 'AI Insights', icon: Lightbulb },
+    { id: 'trending', label: 'Trending Niches', icon: BarChart3, action: () => setCurrentView('niches') },
+    { id: 'opportunities', label: 'AI Opportunities', icon: Target, action: () => setCurrentView('ai-vision') },
+    { id: 'insights', label: 'Market Insights', icon: Lightbulb, action: () => setCurrentView('ai-text') },
   ]
 
   return (
@@ -95,6 +98,7 @@ const Sidebar = ({ isOpen, onClose, currentView, setCurrentView }) => {
                     variant="ghost"
                     onClick={() => {
                       // Handle quick actions
+                      item.action()
                       onClose()
                     }}
                     className="w-full justify-start"

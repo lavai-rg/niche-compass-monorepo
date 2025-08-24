@@ -7,6 +7,9 @@ import Dashboard from './components/Dashboard.jsx'
 import KeywordExplorer from './components/KeywordExplorer.jsx'
 import NicheAnalyzer from './components/NicheAnalyzer.jsx'
 import ProductAnalyzer from './components/ProductAnalyzer.jsx'
+import AIMonitoringDashboard from './components/ai/AIMonitoringDashboard.jsx'
+import AIVisionAnalysis from './components/ai/AIVisionAnalysis.jsx'
+import AITextAnalytics from './components/ai/AITextAnalytics.jsx'
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx'
 import './App.css'
 
@@ -55,6 +58,12 @@ function App() {
         return <NicheAnalyzer />
       case 'products':
         return <ProductAnalyzer />
+      case 'ai-vision':
+        return <AIVisionAnalysis />
+      case 'ai-monitoring':
+        return <AIMonitoringDashboard />
+      case 'ai-text':
+        return <AITextAnalytics />
       case 'dashboard':
       default:
         return <Dashboard setCurrentView={setCurrentView} />

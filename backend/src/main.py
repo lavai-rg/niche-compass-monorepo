@@ -19,6 +19,13 @@ from src.routes.products import products_bp
 from src.routes.market_pulse import market_pulse_bp
 from src.routes.auth_routes import auth_bp
 
+# Import AI monitoring blueprint
+from ai.ai_monitoring_api import ai_monitoring_bp
+
+# Import AI vision and text analytics blueprints
+from src.routes.ai_vision import ai_vision_bp
+from src.routes.ai_text import ai_text_bp
+
 # Import Auth0 validator
 from src.auth import init_auth0_validator
 
@@ -61,6 +68,12 @@ def create_app():
     app.register_blueprint(market_pulse_bp, url_prefix='/api/market')
     logger.info("Registering auth_bp blueprint")
     app.register_blueprint(auth_bp)
+    logger.info("Registering ai_monitoring_bp blueprint")
+    app.register_blueprint(ai_monitoring_bp, url_prefix='/api/ai')
+    logger.info("Registering ai_vision_bp blueprint")
+    app.register_blueprint(ai_vision_bp, url_prefix='/api/ai')
+    logger.info("Registering ai_text_bp blueprint")
+    app.register_blueprint(ai_text_bp, url_prefix='/api/ai')
     logger.info("All blueprints registered successfully")
     
     # Health check endpoint
@@ -98,6 +111,9 @@ def create_app():
                 'users': '/api/users/*',
                 'market_pulse': '/api/market/*',
                 'auth': '/api/auth/*',
+                'ai_monitoring': '/api/ai/monitoring/*',
+                'ai_vision': '/api/ai/vision/*',
+                'ai_text': '/api/ai/text/*',
                 'health': '/api/health'
             },
             'auth': {
