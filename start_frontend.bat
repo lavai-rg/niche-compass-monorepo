@@ -1,0 +1,9 @@
+@echo off
+echo Starting Niche Compass Frontend Server...
+cd /d "C:\Users\spice\OneDrive\Documents\Project Saya\niche-compass-monorepo\frontend"
+echo Current directory: %CD%
+echo Installing dependencies...
+npm install --legacy-peer-deps
+echo Starting development server...
+npm run dev
+pause

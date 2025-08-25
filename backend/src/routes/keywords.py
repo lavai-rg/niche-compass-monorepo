@@ -1,14 +1,14 @@
 from flask import Blueprint, jsonify, request
 from src.models.keyword import Keyword
 from src.models.user import User
-from src.auth import require_auth, get_current_user
+from src.auth.auth_service import auth_service
 import logging
 
 logger = logging.getLogger(__name__)
 keywords_bp = Blueprint('keywords', __name__)
 
 @keywords_bp.route("/keywords/search", methods=["GET"], strict_slashes=False)
-@require_auth
+@auth_service.require_auth
 def search_keywords():
     """Search keywords by query"""
     try:
@@ -38,7 +38,7 @@ def search_keywords():
         return jsonify({'error': 'Internal server error'}), 500
 
 @keywords_bp.route("/keywords/trending", methods=["GET"], strict_slashes=False)
-@require_auth
+@auth_service.require_auth
 def get_trending_keywords():
     """Get trending keywords"""
     try:

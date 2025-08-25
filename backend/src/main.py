@@ -3,6 +3,7 @@ import sys
 import logging
 from flask import Flask, send_from_directory
 from flask_cors import CORS
+from flask_session import Session
 
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -17,17 +18,20 @@ from src.routes.keywords import keywords_bp
 from src.routes.niches import niches_bp
 from src.routes.products import products_bp
 from src.routes.market_pulse import market_pulse_bp
-from src.routes.auth_routes import auth_bp
+
 
 # Import AI monitoring blueprint
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from ai.ai_monitoring_api import ai_monitoring_bp
 
 # Import AI vision and text analytics blueprints
 from src.routes.ai_vision import ai_vision_bp
 from src.routes.ai_text import ai_text_bp
 
-# Import Auth0 validator
-from src.auth import init_auth0_validator
+# Import authentication blueprint
+from src.auth import auth_bp
 
 # Configure logging
 logging.basicConfig(
@@ -47,8 +51,9 @@ def create_app():
     app.config['AUTH0_CLIENT_ID'] = Config.AUTH0_CLIENT_ID
     app.config['AUTH0_CLIENT_SECRET'] = Config.AUTH0_CLIENT_SECRET
     
-    # Initialize Auth0 validator
-    init_auth0_validator(app)
+    # Initialize session management
+    app.config['SESSION_TYPE'] = 'filesystem'
+    Session(app)
     
     # Enable CORS for all routes
     CORS(app, origins="*", 
@@ -67,7 +72,7 @@ def create_app():
     logger.info("Registering market_pulse_bp blueprint")
     app.register_blueprint(market_pulse_bp, url_prefix='/api/market')
     logger.info("Registering auth_bp blueprint")
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
     logger.info("Registering ai_monitoring_bp blueprint")
     app.register_blueprint(ai_monitoring_bp, url_prefix='/api/ai')
     logger.info("Registering ai_vision_bp blueprint")

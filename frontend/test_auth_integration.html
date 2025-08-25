@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Niche Compass - Authentication Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 2em;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status.success { background: #10b981; color: white; }
+        .status.error { background: #ef4444; color: white; }
+        .status.pending { background: #f59e0b; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧭</div>
+            <h1>Niche Compass</h1>
+            <p>Authentication System Test</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 Authentication Test</h3>
+            <p>Test the authentication system with mock users:</p>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="admin@nichecompass.com" placeholder="Enter email">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="password123" placeholder="Enter password">
+            </div>
+            
+            <button class="btn" onclick="testLogin()">🔑 Test Login</button>
+            <button class="btn btn-secondary" onclick="testLogout()">🚪 Test Logout</button>
+            <button class="btn btn-secondary" onclick="testHealth()">🏥 Test Health</button>
+            
+            <div id="authResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔒 Protected Route Test</h3>
+            <p>Test accessing protected routes after authentication:</p>
+            
+            <button class="btn" onclick="testProtectedRoute()">🔍 Test Keywords Search</button>
+            <button class="btn btn-secondary" onclick="testNichesRoute()">📊 Test Niches</button>
+            
+            <div id="routeResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test Results Summary</h3>
+            <div id="testSummary">
+                <p><span class="status pending">PENDING</span> Authentication Health Check</p>
+                <p><span class="status pending">PENDING</span> User Login</p>
+                <p><span class="status pending">PENDING</span> Protected Route Access</p>
+                <p><span class="status pending">PENDING</span> User Logout</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+        let currentUser = null;
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+
+        function updateTestStatus(testName, status) {
+            const summary = document.getElementById('testSummary');
+            const testElement = summary.querySelector(`p:contains('${testName}')`);
+            if (testElement) {
+                const statusSpan = testElement.querySelector('.status');
+                statusSpan.className = `status ${status}`;
+                statusSpan.textContent = status.toUpperCase();
+            }
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('authResult', `✅ Health Check Successful!\n\nStatus: ${data.status}\nService: ${data.service}\nUsers: ${data.authenticated_users}\nSession: ${data.session_active}`, 'success');
+                    updateTestStatus('Authentication Health Check', 'success');
+                } else {
+                    showResult('authResult', `❌ Health Check Failed: ${JSON.stringify(data, null, 2)}`, 'error');
+                    updateTestStatus('Authentication Health Check', 'error');
+                }
+            } catch (error) {
+                showResult('authResult', `❌ Health Check Error: ${error.message}`, 'error');
+                updateTestStatus('Authentication Health Check', 'error');
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentToken = data.access_token;
+                    currentUser = data.user;
+                    
+                    showResult('authResult', `✅ Login Successful!\n\nUser: ${data.user.name}\nEmail: ${data.user.email}\nRole: ${data.user.role}\nToken: ${data.access_token.substring(0, 50)}...`, 'success');
+                    updateTestStatus('User Login', 'success');
+                } else {
+                    showResult('authResult', `❌ Login Failed: ${JSON.stringify(data, null, 2)}`, 'error');
+                    updateTestStatus('User Login', 'error');
+                }
+            } catch (error) {
+                showResult('authResult', `❌ Login Error: ${error.message}`, 'error');
+                updateTestStatus('User Login', 'error');
+            }
+        }
+
+        async function testLogout() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/logout', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentToken = null;
+                    currentUser = null;
+                    
+                    showResult('authResult', `✅ Logout Successful!\n\n${data.message}`, 'success');
+                    updateTestStatus('User Logout', 'success');
+                } else {
+                    showResult('authResult', `❌ Logout Failed: ${JSON.stringify(data, null, 2)}`, 'error');
+                    updateTestStatus('User Logout', 'error');
+                }
+            } catch (error) {
+                showResult('authResult', `❌ Logout Error: ${error.message}`, 'error');
+                updateTestStatus('User Logout', 'error');
+            }
+        }
+
+        async function testProtectedRoute() {
+            if (!currentToken) {
+                showResult('routeResult', `❌ No authentication token. Please login first.`, 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/keywords/search?q=jewelry', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('routeResult', `✅ Protected Route Access Successful!\n\nKeywords Search Results:\n${JSON.stringify(data, null, 2)}`, 'success');
+                    updateTestStatus('Protected Route Access', 'success');
+                } else {
+                    showResult('routeResult', `❌ Protected Route Access Failed: ${JSON.stringify(data, null, 2)}`, 'error');
+                    updateTestStatus('Protected Route Access', 'error');
+                }
+            } catch (error) {
+                showResult('routeResult', `❌ Protected Route Error: ${error.message}`, 'error');
+                updateTestStatus('Protected Route Access', 'error');
+            }
+        }
+
+        async function testNichesRoute() {
+            if (!currentToken) {
+                showResult('routeResult', `❌ No authentication token. Please login first.`, 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/niches', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('routeResult', `✅ Niches Route Access Successful!\n\nNiches Results:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('routeResult', `❌ Niches Route Access Failed: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('routeResult', `❌ Niches Route Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run health check on page load
+        window.onload = function() {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

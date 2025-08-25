@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button.jsx'
 import { Input } from '@/components/ui/input.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { Alert, AlertDescription } from '@/components/ui/alert.jsx'
+import { apiClient } from '../utils/axiosConfig'
 
 const KeywordExplorer = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -32,37 +33,22 @@ const KeywordExplorer = () => {
     setError(null)
 
     try {
-      const response = await fetch('http://localhost:5000/api/keywords/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ keyword: searchQuery.trim() }),
-      })
+      const response = await apiClient.analyzeKeyword(searchQuery.trim())
+      setKeywordData(response.data.keyword_analysis)
 
-      if (!response.ok) {
-        throw new Error('Failed to analyze keyword')
-      }
-
-      const data = await response.json()
-      setKeywordData(data.keyword_analysis)
-
-      // Get suggestions
-      const suggestionsResponse = await fetch('http://localhost:5000/api/keywords/suggestions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ seed_keyword: searchQuery.trim(), limit: 8 }),
-      })
-
-      if (suggestionsResponse.ok) {
-        const suggestionsData = await suggestionsResponse.json()
-        setSuggestions(suggestionsData.suggestions)
+      // Get suggestions (if endpoint exists)
+      try {
+        const suggestionsResponse = await apiClient.searchKeywords(searchQuery.trim())
+        if (suggestionsResponse.data) {
+          setSuggestions(suggestionsResponse.data.results || [])
+        }
+      } catch (suggestionsErr) {
+        // Suggestions endpoint might not exist yet
+        console.log('Suggestions not available:', suggestionsErr.message)
       }
 
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.error || err.message || 'Failed to analyze keyword')
     } finally {
       setIsLoading(false)
     }

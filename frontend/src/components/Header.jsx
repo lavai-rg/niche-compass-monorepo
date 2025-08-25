@@ -1,12 +1,9 @@
 import { Compass, Search, TrendingUp, Package, Menu, User } from 'lucide-react'
 import { Button } from '../components/ui/button.jsx'
-import { useAuth } from '../contexts/AuthContext.jsx'
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar.jsx'
-import LoginButton from '../components/auth/LoginButton.jsx'
-import LogoutButton from '../components/auth/LogoutButton.jsx'
 
-const Header = ({ onMenuClick, currentView, setCurrentView }) => {
-  const { user, isAuthenticated } = useAuth()
+const Header = ({ onMenuClick, currentView, setCurrentView, user, onLogout }) => {
+  const isAuthenticated = !!user
   
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
@@ -93,7 +90,14 @@ const Header = ({ onMenuClick, currentView, setCurrentView }) => {
                 </div>
               </div>
 
-              <LogoutButton />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onLogout}
+                className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+              >
+                🚪 Logout
+              </Button>
             </>
           ) : (
             <div className="flex items-center space-x-2">
@@ -101,7 +105,13 @@ const Header = ({ onMenuClick, currentView, setCurrentView }) => {
                 <p className="text-sm font-medium text-gray-900">Pengunjung</p>
                 <p className="text-xs text-gray-500">Masuk untuk akses penuh</p>
               </div>
-              <LoginButton />
+              <Button 
+                variant="default" 
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                🔑 Sign In
+              </Button>
             </div>
           )}
         </div>

@@ -2,14 +2,14 @@ from flask import Blueprint, jsonify, request
 from src.models.niche import Niche
 from src.models.product import Product
 from src.models.keyword import Keyword
-from src.auth import require_auth, get_current_user
+from src.auth.auth_service import auth_service
 import logging
 
 logger = logging.getLogger(__name__)
 niches_bp = Blueprint('niches', __name__)
 
 @niches_bp.route("/niches", methods=["GET"], strict_slashes=False)
-@require_auth
+@auth_service.require_auth
 def get_niches():
     """Get all niches with pagination"""
     try:

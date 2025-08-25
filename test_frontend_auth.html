@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Authentication Test</h1>
+    
+    <div class="test-section info">
+        <h3>🔍 Test Authentication Flow</h3>
+        <p>Test login, token storage, dan protected route access</p>
+    </div>
+
+    <div class="test-section">
+        <h3>🔑 Step 1: Login</h3>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Step 2: Check Token Storage</h3>
+        <button onclick="checkTokenStorage()">Check Token Storage</button>
+        <div id="tokenResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🚪 Step 3: Test Protected Route</h3>
+        <button onclick="testProtectedRoute()">Test Protected Route</button>
+        <div id="protectedResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🧹 Step 4: Cleanup</h3>
+        <button onclick="clearStorage()">Clear Storage</button>
+        <div id="cleanupResult"></div>
+    </div>
+
+    <script>
+        let currentToken = null;
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>⏳ Logging in...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@nichecompass.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentToken = data.access_token;
+                    localStorage.setItem('authToken', data.access_token);
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Login Successful!</h4>
+                            <p><strong>User:</strong> ${data.user.name}</p>
+                            <p><strong>Email:</strong> ${data.user.email}</p>
+                            <p><strong>Token:</strong> ${data.access_token.substring(0, 50)}...</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Login Failed</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Login Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function checkTokenStorage() {
+            const resultDiv = document.getElementById('tokenResult');
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                const user = JSON.parse(userData);
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Token Storage OK</h4>
+                        <p><strong>Token:</strong> ${token.substring(0, 50)}...</p>
+                        <p><strong>User:</strong> ${user.name} (${user.email})</p>
+                        <p><strong>Token Length:</strong> ${token.length} characters</p>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Token Storage Missing</h4>
+                        <p>No token or user data found in localStorage</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testProtectedRoute() {
+            const resultDiv = document.getElementById('protectedResult');
+            const token = localStorage.getItem('authToken');
+            
+            if (!token) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ No Token Available</h4>
+                        <p>Please login first to get a token</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p>⏳ Testing protected route...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/keywords/search?q=jewelry', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Protected Route Access Successful!</h4>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Response:</strong></p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Protected Route Access Failed</h4>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Error:</strong></p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Protected Route Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            currentToken = null;
+            
+            const resultDiv = document.getElementById('cleanupResult');
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <h4>🧹 Storage Cleared</h4>
+                    <p>All authentication data has been removed from localStorage</p>
+                </div>
+            `;
+        }
+
+        // Auto-check token storage on page load
+        window.onload = function() {
+            checkTokenStorage();
+        };
+    </script>
+</body>
+</html>
